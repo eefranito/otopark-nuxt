@@ -20,19 +20,7 @@
       <button class="btn-add" @click="addCar">Araç Ekle</button>
     </section>
 
-    <div class="grid">
-        <section class="panel">
-          <p class="panel-label">Kapasite</p>
-          <p class="capacity-readout">{{ parkedCars.length }} / {{ TOTAL_CAPACITY }}</p>
-          <p class="capacity-status">
-            <span>Boş yer</span>
-            <strong>{{remainingCapacity}}</strong> </p>
-        </section>
-        <section class="panel">
-          <p class="panel-label">Toplam Kasa</p>
-          <p class="capacity-readout">{{ totalIncome }} TL</p>
-        </section>
-    </div>
+    
     <div class="hazard"></div>
 
     <section class="panel list-panel">
@@ -59,6 +47,13 @@
       </div>
     </section>
   </div>
+
+<CapacityStats
+  :carCount="parkedCars.length"
+  :totalCapacity="TOTAL_CAPACITY"
+  :totalIncome="totalIncome"
+/>
+
 </template>
 
 <script setup>
