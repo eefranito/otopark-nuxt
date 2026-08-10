@@ -4,6 +4,7 @@
       <div>
         <div class="eyebrow">Giriş / Çıkış Kontrol</div>
         <h1>Otopark</h1>
+        <NuxtLink to="/gecmis">Geçmiş Kayıtlar</NuxtLink>
       </div>
     </header>
     <div class="hazard"></div>
@@ -177,7 +178,7 @@ watch(parkingHistory, () => {
 
   /* ---- Main grid: giriş paneli + kapasite paneli ---- */
   /* ---- Panel sıraları: giriş+çıkış, sonra kapasite+kasa ---- */
-  .grid {
+  .panel-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
@@ -334,7 +335,7 @@ watch(parkingHistory, () => {
 
   /* ---- Responsive ---- */
   @media (max-width: 640px) {
-    .grid { grid-template-columns: 1fr; }
+    .panel-grid { grid-template-columns: 1fr; }
     .capacity-readout { font-size: 32px; }
   }
 

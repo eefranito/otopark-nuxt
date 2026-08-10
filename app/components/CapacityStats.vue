@@ -1,5 +1,5 @@
 <template>
-    <div class="grid">
+    <div class="panel-grid">
         <section class="panel">
           <p class="panel-label">Kapasite</p>
           <p class="capacity-readout">{{ carCount }} / {{ totalCapacity }}</p>
