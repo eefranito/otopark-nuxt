@@ -20,53 +20,26 @@
       <button class="btn-add" @click="addCar">Araç Ekle</button>
     </section>
 
-    
     <div class="hazard"></div>
-
-    <section class="panel list-panel">
-      <div class="panel-label">İçerideki Araçlar</div>
-      <input class="search-input" type="text" placeholder="Plaka ara..." v-model="searchValue" />
-      <div v-if="visibleCars.length === 0" class="empty-state">
-        <template v-if="parkedCars.length === 0">
-          <strong>Henüz araç yok.</strong>
-          <span>İlk aracı eklemek için yukarıdan plakayı gir.</span>
-        </template>
-        <template v-else>
-          <strong>Araç bulunamadı.</strong>
-          <span>Girdiğiniz kriterlere uygun araç bulunamadı.</span>
-        </template>
-      </div>
-      <div v-for="car in visibleCars" :key="car.plate" class="car-row">
-        <div class="car-plate">{{ car.plate }}</div>
-        <div class="car-meta">
-          <span class="car-duration">{{ formatDuration(getDurationSeconds(car.entryTime)) }}</span>
-          <span class="car-fee">{{ calculateFee(car.entryTime) }} TL</span>
-        </div>
-        <button v-if="getDurationMinutes(car.entryTime) < 5" class="cancel-btn" @click="cancelCar(car.plate)">İptal Et</button>
-        <button class="exit-row-btn" @click="removeCar(car.plate)">Çıkış Yap</button>
-      </div>
-    </section>
+    <CarList :parkedCars="parkedCars" @exit="removeCar" @cancel="cancelCar" />
+    <CapacityStats
+      :carCount="parkedCars.length"
+      :totalCapacity="TOTAL_CAPACITY"
+      :totalIncome="totalIncome"
+    />
   </div>
-
-<CapacityStats
-  :carCount="parkedCars.length"
-  :totalCapacity="TOTAL_CAPACITY"
-  :totalIncome="totalIncome"
-/>
-
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 
 const parkedCars = ref([]);
-parkedCars.value.push({ plate: "", entryTime: ""
-, leaveTime: null, price: 0.00});
 const plateValue = ref("");
-const searchValue = ref("");
-const tick = ref(0);
+const totalIncome = ref(0);
+const TOTAL_CAPACITY = 50;
+const plateRegex = /^(\d{2})([A-Z]{1,3})(\d{2,4})$/;
+
 onMounted(() => {
-  setInterval(() => tick.value++, 1000)
   const parkedCarsData = localStorage.getItem("parkedCars");
   const totalIncomeData = localStorage.getItem("totalIncome");
   if (parkedCarsData) {
@@ -79,49 +52,6 @@ onMounted(() => {
     parkedCars.value[i].entryTime = new Date(parkedCars.value[i].entryTime);
   }
 })
-const visibleCars = computed(() => {
-  tick.value; 
-  return parkedCars.value.filter(car =>
-    car.plate.toLowerCase().includes(searchValue.value.toLowerCase())
-  );
-});
-const plateRegex = /^(\d{2})([A-Z]{1,3})(\d{2,4})$/;
-const totalIncome = ref(0);
-const TOTAL_CAPACITY = 50;
-const remainingCapacity = computed(() => TOTAL_CAPACITY - parkedCars.value.length);
-
-function formatDuration(totalSeconds) {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${hours} saat ${minutes} dakika ${seconds} saniye`;
-}
-
-function getDurationMinutes(entryTime) {
-  return Math.floor(getDurationSeconds(entryTime) / 60);
-}
-
-function getDurationSeconds(entryTime) {
-  const now = new Date();
-  const diffMs = now.getTime() - entryTime.getTime();
-  return Math.floor(diffMs / 1000);
-}
-
-function calculateFee(entryTime) {
-  const diffMins = getDurationMinutes(entryTime);
-  const hours = Math.ceil(diffMins / 60);
-  let totalFee;
-  if (diffMins < 15) {
-    totalFee = 0;
-  }
-  else if (hours === 1) {
-    totalFee = 200;
-  }
-  else {
-    totalFee = 200 + (hours - 1) * 100;
-  }
-  return totalFee;
-}
 
 function addCar() {
   if(plateValue.value.trim() === "") {
@@ -165,6 +95,39 @@ function cancelCar(plate) {
   } else {
     parkedCars.value = parkedCars.value.filter(car => car.plate !== plate);
   }
+}
+
+function formatDuration(totalSeconds) {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${hours} saat ${minutes} dakika ${seconds} saniye`;
+}
+
+function getDurationMinutes(entryTime) {
+  return Math.floor(getDurationSeconds(entryTime) / 60);
+}
+
+function getDurationSeconds(entryTime) {
+  const now = new Date();
+  const diffMs = now.getTime() - entryTime.getTime();
+  return Math.floor(diffMs / 1000);
+}
+
+function calculateFee(entryTime) {
+  const diffMins = getDurationMinutes(entryTime);
+  const hours = Math.ceil(diffMins / 60);
+  let totalFee;
+  if (diffMins < 15) {
+    totalFee = 0;
+  }
+  else if (hours === 1) {
+    totalFee = 200;
+  }
+  else {
+    totalFee = 200 + (hours - 1) * 100;
+  }
+  return totalFee;
 }
 
 watch(parkedCars, () => {
