@@ -8,17 +8,7 @@
     </header>
     <div class="hazard"></div>
 
-    <section class="panel">
-      <div class="panel-label">Araç Girişi</div>
-      <input
-        class="plate-input"
-        type="text"
-        placeholder="35 AUB 478"
-        maxlength="12"
-        v-model="plateValue"
-      />
-      <button class="btn-add" @click="addCar">Araç Ekle</button>
-    </section>
+    <CarEntry @add="handleAddCar" />
 
     <div class="hazard"></div>
     <CarList :parkedCars="parkedCars" @exit="removeCar" @cancel="cancelCar" />
@@ -34,10 +24,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 
 const parkedCars = ref([]);
-const plateValue = ref("");
 const totalIncome = ref(0);
 const TOTAL_CAPACITY = 50;
-const plateRegex = /^(\d{2})([A-Z]{1,3})(\d{2,4})$/;
 
 onMounted(() => {
   const parkedCarsData = localStorage.getItem("parkedCars");
@@ -52,27 +40,6 @@ onMounted(() => {
     parkedCars.value[i].entryTime = new Date(parkedCars.value[i].entryTime);
   }
 })
-
-function addCar() {
-  if(plateValue.value.trim() === "") {
-    alert("Lütfen plaka girin.");
-    return;
-  }
-  const normalizedPlate = plateValue.value.replace(/\s+/g, "").toUpperCase();
-  if(!plateRegex.test(normalizedPlate)) {
-    alert("Geçersiz plaka formatı.");
-    return;
-  }
-  const match = normalizedPlate.match(plateRegex);
-  const formattedPlate = `${match[1]} ${match[2]} ${match[3]}`;
-  const index = parkedCars.value.findIndex(car => car.plate === formattedPlate);
-  if(index !== -1) {
-    alert("Araç zaten otoparkta.");
-    return;
-  }
-  parkedCars.value.push({ plate: formattedPlate, entryTime: new Date() });
-  plateValue.value = "";
-}
 
 function removeCar(plate) {
   const foundCar = parkedCars.value.find(car => car.plate === plate);
@@ -95,6 +62,15 @@ function cancelCar(plate) {
   } else {
     parkedCars.value = parkedCars.value.filter(car => car.plate !== plate);
   }
+}
+
+function handleAddCar(plate) {
+  const index = parkedCars.value.findIndex(car => car.plate === plate);
+  if (index !== -1) {
+    alert("Araç zaten otoparkta.");
+    return;
+  }
+  parkedCars.value.push({ plate: plate, entryTime: new Date() });
 }
 
 function formatDuration(totalSeconds) {
