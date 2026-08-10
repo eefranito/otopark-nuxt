@@ -1,5 +1,23 @@
 <template>
-  <NuxtPage />
+  <div class="wrap">
+    <header>
+      <div>
+        <div class="eyebrow">Giriş / Çıkış Kontrol</div>
+        <h1>Otopark</h1>
+      </div>
+    </header>
+    <div class="hazard"></div>
+
+    <CarEntry @add="handleAddCar" />
+
+    <div class="hazard"></div>
+    <CarList :parkedCars="parkedCars" @exit="removeCar" @cancel="cancelCar" />
+    <CapacityStats
+      :carCount="parkedCars.length"
+      :totalCapacity="TOTAL_CAPACITY"
+      :totalIncome="totalIncome"
+    />
+  </div>
 </template>
 
 <script setup>
