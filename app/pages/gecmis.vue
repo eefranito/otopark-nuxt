@@ -31,10 +31,65 @@
       <span class="car-fee">{{ record.fee }} TL</span>
     </div>
   </div>
+  <div class="panel-grid stack-top">
+  <section class="panel">
+    <div class="panel-label">Bu Hafta</div>
+    <div v-if="weekTopByCount" class="stat-line">
+      <span>En çok araç: </span>
+      <strong>{{ weekTopByCount[0] }}</strong>
+      <span class="stat-detail"> ({{ weekTopByCount[1].count }} kez) </span>
+    </div>
+    <div v-if="weekTopByIncome" class="stat-line">
+      <span>En çok kazandıran: </span>
+      <strong>{{ weekTopByIncome[0] }}</strong>
+      <span class="stat-detail"> ({{ weekTopByIncome[1].income }} TL) </span>
+    </div>
+    <div v-if="!weekTopByCount" class="empty-state">
+      <strong>Bu hafta kayıt yok.</strong>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-label">Bu Ay</div>
+    <div v-if="monthTopByCount" class="stat-line">
+      <span>En çok araç: </span>
+      <strong>{{ monthTopByCount[0] }}</strong>
+      <span class="stat-detail"> ({{ monthTopByCount[1].count }} kez) </span>
+    </div>
+    <div v-if="monthTopByIncome" class="stat-line">
+      <span>En çok kazandıran: </span>
+      <strong>{{ monthTopByIncome[0] }}</strong>
+      <span class="stat-detail"> ({{ monthTopByIncome[1].income }} TL) </span>
+    </div>
+    <div v-if="!monthTopByCount" class="empty-state">
+      <strong>Bu ay kayıt yok.</strong>
+    </div>
+  </section>
+</div>
 </section>
   </div>
 </template>
 <style scoped>
+.stat-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 8px 0;
+  font-size: 14px;
+  color: var(--steel);
+}
+
+.stat-line strong {
+  color: var(--concrete);
+  font-family: var(--font-mono);
+}
+
+.stat-detail {
+  color: var(--lane-yellow);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
 .day-cell {
   display: flex;
   flex-direction: column;
@@ -69,7 +124,6 @@
 }
 </style>
 <script setup>
-
 const totalIncome = ref(0);
 const parkingHistory = ref([]);
 const selectedDate = ref(null);
@@ -96,6 +150,59 @@ function toDateKey(year, month, day) {
 
 function getRecordKey(record) {
   return toDateKey(record.exitTime.getFullYear(), record.exitTime.getMonth() + 1, record.exitTime.getDate());
+}
+
+function getStartOfWeek(date) {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Pazar, 1=Pazartesi, ... 6=Cumartesi
+  const diff = day === 0 ? -6 : 1 - day; // Pazartesi'ye kaç gün geriye gitmeli
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function getStartOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function topPlatesInRange(records) {
+  return records.reduce(function (acc, record) {
+    if (!acc[record.plate]) {
+      acc[record.plate] = { count: 0, income: 0 };
+    }
+    acc[record.plate].count += 1;
+    acc[record.plate].income += record.fee;
+    return acc;
+  }, {});
+}
+
+const thisWeekRecords = computed(() => {
+  const start = getStartOfWeek(new Date());
+  return parkingHistory.value.filter(function (record) {
+    return record.exitTime >= start;
+  });
+});
+
+const thisMonthRecords = computed(() => {
+  const start = getStartOfMonth(new Date());
+  return parkingHistory.value.filter(function (record) {
+    return record.exitTime >= start;
+  });
+});
+
+const weekTopByCount = computed(() => getTopPlate(thisWeekRecords.value, "count"));
+const monthTopByCount = computed(() => getTopPlate(thisMonthRecords.value, "count"));
+const weekTopByIncome = computed(() => getTopPlate(thisWeekRecords.value, "income"));
+const monthTopByIncome = computed(() => getTopPlate(thisMonthRecords.value, "income"));
+
+function getTopPlate(records, metric) {
+  const grouped = topPlatesInRange(records);
+  const entries = Object.entries(grouped);
+  if(entries.length === 0) return null;
+  entries.sort(function (a, b) {
+    return b[1][metric] - a[1][metric];
+  });
+  return entries[0];
 }
 
 const dailyStats = computed(() => {
