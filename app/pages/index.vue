@@ -2,107 +2,73 @@
   <div class="wrap">
     <header>
       <div>
-        <div class="eyebrow">Giriş / Çıkış Kontrol</div>
-        <h1>Otopark</h1>
-        <NuxtLink to="/gecmis">Geçmiş Kayıtlar</NuxtLink>
+        <div class="eyebrow">Yönetici Paneli</div>
+        <h1>Tüm Otoparklar</h1>
       </div>
+      <NuxtLink to="/gecmis">Geçmiş Kayıtlar</NuxtLink>
     </header>
-    <div class="hazard"></div>
-
-    <CarEntry @add="handleAddCar" />
 
     <div class="hazard"></div>
-    <CarList :parkedCars="parkedCars" @exit="removeCar" @cancel="cancelCar" />
-    <CapacityStats
-      :carCount="parkedCars.length"
-      :totalCapacity="TOTAL_CAPACITY"
-      :totalIncome="totalIncome"
-    />
+
+    <div class="panel-grid">
+      <section class="panel">
+        <div class="panel-label">Toplam Araç</div>
+        <div class="capacity-readout"><span>{{ grandParkedCars }}</span><span> / {{ grandCapacity }}</span></div>
+      </section>
+      <section class="panel">
+        <div class="panel-label">Toplam Kasa</div>
+        <div class="capacity-readout readout-green">{{ grandTotal }}<span> ₺</span></div>
+      </section>
+    </div>
+
+    <div class="hazard"></div>
+
+    <div class="lot-list">
+      <NuxtLink to="/urla" class="lot-card">
+        <div class="lot-card-header">
+          <span class="panel-label">{{ urla.lotInfo.name }}</span>
+          <span class="lot-arrow">→</span>
+        </div>
+        <div class="lot-card-stats">
+          <span class="lot-stat-count">{{ urla.parkedCars.length }} / {{ urla.TOTAL_CAPACITY }}</span>
+          <span class="lot-stat-income">{{ urla.totalIncome }} ₺</span>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink to="/iskele" class="lot-card">
+        <div class="lot-card-header">
+          <span class="panel-label">{{ iskele.lotInfo.name }}</span>
+          <span class="lot-arrow">→</span>
+        </div>
+        <div class="lot-card-stats">
+          <span class="lot-stat-count">{{ iskele.parkedCars.length }} / {{ iskele.TOTAL_CAPACITY }}</span>
+          <span class="lot-stat-income">{{ iskele.totalIncome }} ₺</span>
+        </div>
+      </NuxtLink>
+
+      <NuxtLink to="/guzelbahce" class="lot-card">
+        <div class="lot-card-header">
+          <span class="panel-label">{{ guzelbahce.lotInfo.name }}</span>
+          <span class="lot-arrow">→</span>
+        </div>
+        <div class="lot-card-stats">
+          <span class="lot-stat-count">{{ guzelbahce.parkedCars.length }} / {{ guzelbahce.TOTAL_CAPACITY }}</span>
+          <span class="lot-stat-income">{{ guzelbahce.totalIncome }} ₺</span>
+        </div>
+      </NuxtLink>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
 
-const parkedCars = ref([]);
-const totalIncome = ref(0);
-const TOTAL_CAPACITY = 50;
-const parkingHistory = ref([]);
+const urla = useParkingLot("urla");
+const iskele = useParkingLot("iskele");
+const guzelbahce = useParkingLot("guzelbahce");
 
-onMounted(() => {
-  const parkedCarsData = localStorage.getItem("parkedCars");
-  const totalIncomeData = localStorage.getItem("totalIncome");
-  const parkingHistoryData = localStorage.getItem("parkingHistory");
-  if (parkedCarsData) {
-    parkedCars.value = JSON.parse(parkedCarsData);
-  }
-  if (totalIncomeData) {
-    totalIncome.value = JSON.parse(totalIncomeData);
-  }
-  if(parkingHistoryData) {
-    parkingHistory.value = JSON.parse(parkingHistoryData);
-  }
-  for(let i = 0; i < parkedCars.value.length; i++) {
-    parkedCars.value[i].entryTime = new Date(parkedCars.value[i].entryTime);
-  }
-  for(let i = 0; i < parkingHistory.value.length; i++) {
-    parkingHistory.value[i].entryTime = new Date(parkingHistory.value[i].entryTime);
-    parkingHistory.value[i].exitTime = new Date(parkingHistory.value[i].exitTime);
-  }
-})
-
-function removeCar(plate) {
-  const foundCar = parkedCars.value.find(car => car.plate === plate);
-  if (!foundCar) {
-    alert('Aradığınız araç sistemimizde kayıtlı değil.');
-    return;
-  } else {
-    const fee = calculateFee(foundCar.entryTime);
-    alert(`Otopark ücretiniz ${fee} TL. Teşekkürler, tekrar bekleriz.`);
-
-    const record = {
-      plate: foundCar.plate,
-      entryTime: foundCar.entryTime,
-      exitTime: new Date(),
-      fee: fee,
-    };
-    parkingHistory.value.push(record);
-
-    parkedCars.value = parkedCars.value.filter(car => car.plate !== plate);
-    totalIncome.value = totalIncome.value + fee;
-  }
-} 
-
-function cancelCar(plate) {
-  const foundCar = parkedCars.value.find(car => car.plate === plate);
-  if (!foundCar) {
-    alert('Aradığınız araç sistemimizde kayıtlı değil.');
-    return;
-  } else {
-    parkedCars.value = parkedCars.value.filter(car => car.plate !== plate);
-  }
-}
-
-function handleAddCar(plate) {
-  const index = parkedCars.value.findIndex(car => car.plate === plate);
-  if (index !== -1) {
-    alert("Araç zaten otoparkta.");
-    return;
-  }
-  parkedCars.value.push({ plate: plate, entryTime: new Date() });
-}
-
-watch(parkedCars, () => {
-  localStorage.setItem("parkedCars", JSON.stringify(parkedCars.value));
-}, { deep: true });
-
-watch(totalIncome, () => {
-  localStorage.setItem("totalIncome", JSON.stringify(totalIncome.value));
-});
-
-watch(parkingHistory, () => {
-  localStorage.setItem("parkingHistory", JSON.stringify(parkingHistory.value));
-}, { deep: true });
+const grandTotal = computed(() => urla.totalIncome.value + iskele.totalIncome.value + guzelbahce.totalIncome.value);
+const grandCapacity = computed(() => urla.TOTAL_CAPACITY + iskele.TOTAL_CAPACITY + guzelbahce.TOTAL_CAPACITY);
+const grandParkedCars = computed(() => urla.parkedCars.value.length + iskele.parkedCars.value.length + guzelbahce.parkedCars.value.length);
 </script> 
 
 <style>
@@ -445,4 +411,56 @@ watch(parkingHistory, () => {
 
 .search-input::placeholder { color: var(--steel); opacity: 0.6; }
 .search-input:focus { outline: none; border-color: var(--lane-yellow); }
+
+.lot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lot-card {
+  display: block;
+  background: var(--asphalt-light);
+  border: 1px solid var(--asphalt-border);
+  border-radius: 10px;
+  padding: 20px 24px;
+  text-decoration: none;
+  color: var(--concrete);
+  transition: border-color 0.15s ease;
+}
+
+.lot-card:hover {
+  border-color: var(--lane-yellow);
+}
+
+.lot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.lot-arrow {
+  color: var(--lane-yellow);
+  font-family: var(--font-mono);
+}
+
+.lot-card-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 8px;
+}
+
+.lot-stat-count {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--concrete);
+}
+
+.lot-stat-income {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--go-green);
+}
 </style>
